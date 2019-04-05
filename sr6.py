@@ -272,10 +272,9 @@ class Bitmap(object):
 
 #el rotate tiene los angulos medidos en radianes
 #    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
-    def load(self, filename, matfile, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
-            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0)):
+    def load(self, filename, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
+            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0), ncolor= (255, 0, 255), luz=(0,0,1)):
         model = Obj(filename)
-        luz= Vector3(-0.7,0.7,0.7)
 
         self.loadViewportMatrix()
         self.loadModelMatrix(translate, scale, rotate)
@@ -291,15 +290,7 @@ class Bitmap(object):
 
                 a = self.transform(model.vertices[f1])
                 b = self.transform(model.vertices[f2])
-                c = self.transform(model.vertices[f3])
-                normal = normalizar(prodCruz(restaVectorial(b,a), restaVectorial(c, a)))
-                intensidad = prodPunto(normal, luz)
-                shade = int(255*intensidad)
-                if shade <0 :
-                    continue
-                elif shade > 255:
-                    shade = 255
-                
+                c = self.transform(model.vertices[f3])                
                 
                 n1 = face[0][2] -1
                 n2 = face[1][2] -1
@@ -308,12 +299,13 @@ class Bitmap(object):
                 nA = Vector3(*model.normals[n1])
                 nB = Vector3(*model.normals[n2])
                 nC = Vector3(*model.normals[n3])
-                self.triangle(a,b,c, nA, nB, nC, luz, color(200, 122, 123))
+                ncolor = color(200, 122, 123)
+                self.triangle(a,b,c, nA, nB, nC, luz, ncolor)
                 #except(IndexError):
                  #   pass
                 
     
-    def triangle(self, A, B, C, nA, nB, nC, luz, ncolors):
+    def triangle(self, A, B, C, nA, nC, nB, luz, ncolors):
         
         xy_min, xy_max = ordenarXY(A,B,C)
         #print(xy_min, xy_max)
@@ -440,10 +432,7 @@ class Bitmap(object):
         self.View = mulMat(M, O_)
 
 
-
-
 def gourad(render, **kwargs):
-    #print("gourdad")
     w,v,u = kwargs["bar"]
     nA, nB, nC = kwargs["normales"]
 
@@ -457,13 +446,10 @@ def gourad(render, **kwargs):
     b = colorz[2]
     vnormal = Vector3(normx, normy, normz)
     intensity = prodPunto(vnormal, luz)
-   # print(intensity)
     if intensity < 0:
         intensity =0
     elif intensity >1:
         intensity =1
-   # print(r,g,b)
-   # print(intensity*r, intensity*g, intensity*b)
     return color(
         round(intensity * r),
         round(intensity * g),

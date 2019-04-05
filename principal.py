@@ -3,9 +3,10 @@
 # 17138
 # Graficas por Computadora 
 
-import sr6 as s
+import shaders as s
 
 s.bm = s.Bitmap(900,900)
-#                                 translate    scale        eye       up      center      color     luz
-s.bm.load('esferatriangulada.obj', (0,0,0), (0.8,0.8,0.8), (1,1,1), (0,1,0), (0,0,0), (0,255,0), (1,1,1))
+s.glClearColor(0.5,0.5,0.5)
+#                                 translate    scale      rotate      eye       up      center      color     luz
+s.bm.load('esferatriangulada.obj', (0,0,0), (0.8,0.8,0.8), (0,0,0), (0,0,1), (0,1,0), (0,0,0), (200, 122, 123), (0,0,1))
 s.glFinish("sphere")
