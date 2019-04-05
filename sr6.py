@@ -443,7 +443,7 @@ class Bitmap(object):
 
 
 def gourad(render, **kwargs):
-    print("gourdad")
+    #print("gourdad")
     w,v,u = kwargs["bar"]
     nA, nB, nC = kwargs["normales"]
 
@@ -457,13 +457,13 @@ def gourad(render, **kwargs):
     b = colorz[2]
     vnormal = Vector3(normx, normy, normz)
     intensity = prodPunto(vnormal, luz)
-    print(intensity)
+   # print(intensity)
     if intensity < 0:
         intensity =0
     elif intensity >1:
         intensity =1
-    print(r,g,b)
-    print(intensity*r, intensity*g, intensity*b)
+   # print(r,g,b)
+   # print(intensity*r, intensity*g, intensity*b)
     return color(
         round(intensity * r),
         round(intensity * g),
