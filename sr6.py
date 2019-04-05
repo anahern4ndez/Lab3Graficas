@@ -151,13 +151,11 @@ def glFinish(nombre):
     x0 = 0
     y0 = 0
 
-
 def mulMat(A, B):
+    #en caso que la matriz A sea un vector, no una matriz (en el caso del vector "aumentado")
     filasA = len(A)
     colA = len(A[0])
     colB = len(B[0])
-        #en caso que la matriz A sea un vector, no una matriz (en el caso del vector "aumentado")
-    filasA = len(A)
     try: 
         colA = len(A[0])
     except(TypeError):
@@ -168,7 +166,6 @@ def mulMat(A, B):
     except(TypeError):
         colB = 1
 
-
     #creacion de matriz resultado:
     C=[]
     try: 
@@ -177,70 +174,12 @@ def mulMat(A, B):
 
         #multiplicacion de A*B y store en C. 
         for i in range(filasA):
-            for j in range(colA):
-                for k in range(colB):
+            for j in range(colB):
+                for k in range(len(B)):
                     C[i][j] += A[i][k] * B[k][j]
-    except(RuntimeError, TypeError, NameError):
-        print("La multiplicación entre estas matrices no puede ser realizada. ")
+    except(RuntimeError, TypeError, NameError) as error:
+        print(error)
     return C
-
-# ==========================================================================
-#               CLASE MATERIAL 
-# ==========================================================================
-
-class Material(object):
-    def __init__(self, filename):
-
-        self.vmat =[] 
-        with open(filename) as f:
-            self.lines = f.read().splitlines()
-        self.read()
-
-    # se realiza la lectura del archivo obj
-    def read(self):
-        for line in self.lines:
-            if line:
-                prefix, value = line.split(' ', 1)
-
-                if prefix == "Kd":
-                    self.vmat.append(list(map(float, value.split(' '))))
-
-
-# ==========================================================================
-#               CLASE TEXTURA
-# ==========================================================================
-
-class Texture(object):
-    def __init__(self, path):
-        self.path = path
-        self.read()
-
-    def read(self):
-        img = open(self.path, "rb")
-        img.seek(2 + 4 + 4)
-        header_size = struct.unpack("=l", img.read(4))[0]
-        img.seek(2 + 4 + 4 + 4 + 4)
-        self.width = struct.unpack("=l", img.read(4))[0]
-        self.height = struct.unpack("=l", img.read(4))[0]
-        self.pixels = []
-        img.seek(header_size)
-
-        #debe ser un bmp de 24 bits
-        for y in range(self.height):
-            self.pixels.append([])
-            for x in range(self.width):
-                b = ord(img.read(1)) #ord se usa para obtener el numero de un char
-                g = ord(img.read(1))
-                r = ord(img.read(1))
-                self.pixels[y].append(color(r,g,b))
-
-        img.close()
-
-    def get_color(self, tx, ty, intensidad): #las coordenadas ingresadas aqui son normalizadas
-        x = int(tx * self.width)
-        y = int(ty * self.height)
-        return bytes(map(lambda b: round(b*intensidad) if b *intensidad > 0 else 0,(self.pixels[y][x])))
-
 
 # ==========================================================================
 #               CLASE OBJ
@@ -284,7 +223,6 @@ class Bitmap(object):
         self.height = height
         self.framebuffer = []
         self.clear()
-        active_shader = None
         glViewPort(1, 1, width-1, height -1)
 
     def clear(self):
@@ -332,44 +270,11 @@ class Bitmap(object):
     def point(self,x,y,color = color(255,255,255)):
         self.framebuffer[y][x] = color
 
-    #funcion de línea, para dibujar el outline de los triangulos
-    def line(self, v1, v2, color = color(255,255,255)):
-        global vpx, vpy, centrox, centroy, bm, vpHeight, vpWidth
-        x1, y1, x2, y2 =  v1.x, v1.y, v2.x, v2.y
-        dy = abs(y2-y1)
-        dx = abs(x2-x1)
-        m = dy
-        steep = dy >dx 
-
-        if steep:
-            x1,y1 = y1,x1
-            x2,y2 = y2,x2
-            dy = abs(y2-y1)
-            dx = abs(x2-x1)
-            m = dy/dx *dx
-        
-        if x1>x2:
-            x1, x2 = x2, x1
-            y1, y2 = y2, y1
-
-        offset =0 
-        threshold = 0.5 *2 *dx
-        y = y1
-        for x in range(x1, x2+1):
-            if steep:
-                self.point(y, x, color)
-            else:
-                self.point(x, y, color)
-            offset +=m
-            if offset >= threshold:
-                y+=1 if y1<y2 else -1
-                threshold +=1 *dx
-
-
-    def load(self, filename, translate =(0,0,0), scale= (1,1,1), rotate = (0,0,0),
-            eye = (1,0,1), up = (0,1,0), center=(0,0,0), ncolors = (255, 0, 255), luz = Vector3(0,0,1)):
+    def load(self, filename, translate =(0,0,0), scale= (0.8,0.8,0.8), rotate = (0,0,0),
+            eye = (1,0,1), up = (0,1,0), center=(0,0,0), ncolors = (255, 0, 255), luz = (0,0,1)):
 
         model = Obj(filename)
+        #self.luz= Vector3(-0.7,0.7,0.7)
         self.loadViewportMatrix()
         self.loadModelMatrix(translate, scale, rotate)
         self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
@@ -379,31 +284,75 @@ class Bitmap(object):
             f2 = face[1][0] -1
             f3 = face[2][0] -1
 
-            a = self.transform(model.vertices[f1])
-            b = self.transform(model.vertices[f2])
-            c = self.transform(model.vertices[f3])
-                
-            f1 = face[0][2] -1
-            f2 = face[1][2] -1
-            f3 = face[2][2] -1
+            a = self.transform(Vector3(*model.vertices[f1]))
+            b = self.transform(Vector3(*model.vertices[f2]))
+            c = self.transform(Vector3(*model.vertices[f3]))
+            
+            print(a,b,c)
+            n1 = face[0][2] -1
+            n2 = face[1][2] -1
+            n3 = face[2][2] -1
 
-            nA = Vector3(*model.normals[f1])
-            nB = Vector3(*model.normals[f2])
-            nC = Vector3(*model.normals[f3])
+            nA = Vector3(*model.normals[n1])
+            nB = Vector3(*model.normals[n2])
+            nC = Vector3(*model.normals[n3])
             self.triangle(a,b,c, nA, nB, nC, luz, ncolors)
+#el rotate tiene los angulos medidos en radianes
+#    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
+    def load(self, filename, matfile, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
+            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0)):
+        model = Obj(filename)
+        luz= Vector3(-0.7,0.7,0.7)
+
+        self.loadViewportMatrix()
+        self.loadModelMatrix(translate, scale, rotate)
+        self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
+
+        #aplicación de luz y material a cada cara encontrada en el modelo
+        for face in model.faces:
+            vcount = len(face)
+            if vcount == 3:
+                f1 = face[0][0] -1
+                f2 = face[1][0] -1
+                f3 = face[2][0] -1
+
+                a = self.transform(model.vertices[f1])
+                b = self.transform(model.vertices[f2])
+                c = self.transform(model.vertices[f3])
+                normal = normalizar(prodCruz(restaVectorial(b,a), restaVectorial(c, a)))
+                intensidad = prodPunto(normal, luz)
+                shade = int(255*intensidad)
+                if shade <0 :
+                    continue
+                elif shade > 255:
+                    shade = 255
+                
+                
+                n1 = face[0][2] -1
+                n2 = face[1][2] -1
+                n3 = face[2][2] -1
+
+                nA = Vector3(*model.normals[n1])
+                nB = Vector3(*model.normals[n2])
+                nC = Vector3(*model.normals[n3])
+                self.triangle(a,b,c, nA, nB, nC, luz, color(shade, shade, shade))
+                #except(IndexError):
+                 #   pass
+                
     
-    def triangle(self, A, B, C, nA, nC, nB, luz,color= color(255,255,255)):
+    def triangle(self, A, B, C, nA, nB, nC, luz, ncolors):
         
         xy_min, xy_max = ordenarXY(A,B,C)
-
+        #print(xy_min, xy_max)
         for x in range(xy_min.x, xy_max.x + 1):
             for y in range (xy_min.y, xy_max.y + 1):
+                #print(x,y)
                 w, v, u = barycentric(A,B,C, Vector2(x,y))
-                print(w,v,u)
+                #print(w,v,u)
                 if w< 0 or v <0 or u<0:
                     continue
                     
-                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = luz, colores = color)
+                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz), colores = color)
                 z = A.z*w + B.z*v  + C.z*u
                 if z > self.zbuffer[x][y]:
                     self.point(x,y,color)
@@ -415,9 +364,9 @@ class Bitmap(object):
     
     def transform(self, vertex):
         aumentado = [
-            [float(vertex[0])],
-            [float(vertex[1])],
-            [float(vertex[2])],
+            [vertex[0]],
+            [vertex[1]],
+            [vertex.[2]],
             [1.0]
         ]
         #la multiplicacion de matrices va de afuera para adentro     
