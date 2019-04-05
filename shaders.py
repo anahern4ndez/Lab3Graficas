@@ -9,6 +9,7 @@ import struct
 from collections import namedtuple
 from math import *
 import perlin as p
+from random import randint as ri
 
 #variables globales
 Vector2 = namedtuple('Vertex2',['x', 'y'])
@@ -220,6 +221,7 @@ class Obj(object):
 
 class Bitmap(object):
     def __init__(self, width, height):
+        self.active_shader = None
         self.width = width
         self.height = height
         self.framebuffer = []
@@ -274,9 +276,10 @@ class Bitmap(object):
 #el rotate tiene los angulos medidos en radianes
 #    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
     def load(self, filename, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
-            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0), luz=(0,0,1)):
+            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0), luz=(0,0,1), active_shader = None):
         model = Obj(filename)
-
+        if filename == "esfera.obj":
+            self.active_shader = gouradPlanet
         self.loadViewportMatrix()
         self.loadModelMatrix(translate, scale, rotate)
         self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
@@ -313,8 +316,7 @@ class Bitmap(object):
                 #print(w,v,u)
                 if w< 0 or v <0 or u<0:
                     continue
-                    
-                color = gourad(self, x, y, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz))
+                color = self.active_shader(self, x, y, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz))
                 z = A.z*w + B.z*v  + C.z*u
                 if z > self.zbuffer[x][y]:
                     self.point(x,y,color)
@@ -429,7 +431,7 @@ class Bitmap(object):
         self.View = mulMat(M, O_)
 
 
-def gourad(render, x, y, **kwargs):
+def gouradPlanet(render, x, y, **kwargs):
     w,v,u = kwargs["bar"]
     nA, nB, nC = kwargs["normales"]
 
@@ -449,39 +451,98 @@ def gourad(render, x, y, **kwargs):
     wolf_grey = (156,156,154)
     light_brown = (112,96,80)
     wood = (123,82,52)
+    white = (255, 255, 255)
+    dark_grey = (135,135,123)
+    dark_wood = (58,53,50)
+    browngrey = (152,148,137)
 
     pnoise = p.Perlin()
-
     for m in range(800):
         for n in range(800):
-            col = [int((pnoise.value(x/800.0, y/10.0, 0) +1) * 250), ] *3
+            col = [int((pnoise.value(x/900.0, y/10.0, 0)+1) *150), ] *3
 
-            if col[0] > 250:
-                mul = [int((light_brown[0]*col[0]/255.0)* intensity),int((light_brown[1]*col[1]/255.0)* intensity),int((light_brown[2]*col[2]/255.0)* intensity)]
+            if col[0] >=220 and col[0] <=200:
+                mul = [int((browngrey[0]*col[0]/255.0)* intensity),int((browngrey[1]*col[1]/255.0)* intensity),
+                    int((browngrey[2]*col[2]/255.0)* intensity)]
                 if mul[0] < 0: mul[0] =0
                 if mul[1] < 0: mul[1] = 0
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
-            else: 
+
+            if col[0] > 250:
+                mul = [int((light_brown[0]*col[0]/255.0)* intensity),int((light_brown[1]*col[1]/255.0)* intensity),
+                int((light_brown[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+
+            if col[0] >190: 
                 mul = [int((wolf_grey[0]*col[0]/255.0)* intensity),int((wolf_grey[1]*col[1]/255.0)* intensity),
                     int((wolf_grey[2]*col[2]/255.0)* intensity)]
                 if mul[0] < 0: mul[0] =0
                 if mul[1] < 0: mul[1] = 0
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
-            '''elif col[1] >60: 
-                mul = [0,0,0]
-                if mul[0] > 0: mul[0] = int((wood[0]*col[0]/255.0)* intensity)
-                if mul[1] > 0: mul[1] = int((wood[1]*col[0]/255.0)* intensity)
-                if mul[2] > 0: mul[2] = int((wood[2]*col[0]/255.0)* intensity)
-                return color(mul[0], mul[1], mul[2])
-            elif col[1] >40: 
-                mul = [0,0,0]
-                if mul[0] > 0: mul[0] = int((sand_grey[0]*col[0]/255.0)* intensity)
-                if mul[1] > 0: mul[1] = int((sand_grey[1]*col[0]/255.0)* intensity)
-                if mul[2] > 0: mul[2] = int((sand_grey[2]*col[0]/255.0)* intensity)
-                return color(mul[0], mul[1], mul[2])'''
             
+            if col[0] >=120 and col[0] <=160:
+                mul = [int((dark_wood[0]*col[0]/255.0)* intensity),int((dark_wood[1]*col[1]/255.0)* intensity),
+                    int((dark_wood[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+
+            if col[0] >170: 
+                mul = [int((wood[0]*col[0]/255.0)* intensity),int((wood[1]*col[1]/255.0)* intensity),
+                    int((wood[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+            
+            if col[0] >100: 
+                mul = [int((sand_grey[0]*col[0]/255.0)* intensity),int((sand_grey[1]*col[1]/255.0)* intensity),
+                    int((sand_grey[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+            else:
+                mul = [int((white[0]*col[0]/255.0)* intensity),int((white[1]*col[1]/255.0)* intensity),
+                    int((white[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
 
 
 
+def Estrellas():
+    r = bm
+    glClearColor(0,0,0)    
+    for x in range(1, r.width-1):
+        for y in range(1, r.height-1):
+            st = ri(0, 1000)
+            tamano = ri(0,2) #determinara el tamano de las estrellas
+            try:
+                if (st  == 3):
+                    if tamano ==0: # estrella de tamaño de 1 pixeles
+                        r.framebuffer[y][x] = color(255,255,255)
+                    if tamano ==1: # estrella de tamaño de 4 pixeles
+                        r.framebuffer[y][x] = color(255,255,255)
+                        r.framebuffer[y][x+1] = color(255,255,255)
+                        r.framebuffer[y+1][x] = color(255,255,255)
+                        r.framebuffer[y+1][x+1] = color(255,255,255)
+                    if tamano ==2: # estrella de tamaño de 9 pixeles
+                        r.framebuffer[y][x] = color(255,255,255)
+                        r.framebuffer[y][x+1] = color(255,255,255)
+                        r.framebuffer[y][x+2] = color(255,255,255)
+                        r.framebuffer[y+1][x] = color(255,255,255)
+                        r.framebuffer[y+1][x+1] = color(255,255,255)
+                        r.framebuffer[y+1][x+2] = color(255,255,255)
+                        r.framebuffer[y+2][x] = color(255,255,255)
+                        r.framebuffer[y+2][x+1] = color(255,255,255)
+                        r.framebuffer[y+2][x+2] = color(255,255,255)
+            except IndexError:
+                pass
