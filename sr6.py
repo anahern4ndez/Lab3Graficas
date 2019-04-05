@@ -3,7 +3,7 @@
 # Ana Lucia Hernandez
 # 17138
 # Graficas por Computadora 
-#Modulo donde se guardas las funciones necesarias para el sr5. 
+#Modulo donde se guardas las funciones necesarias para el sr6. 
 
 import struct
 from collections import namedtuple
@@ -84,7 +84,7 @@ def word(c):
 def dword(c):
     return struct.pack("=l", c)
 
-def color(r,g,b):
+def color (r,g,b):
     return bytes([b,g,r])
 
 def glInit():
@@ -190,7 +190,6 @@ class Obj(object):
         self.vertices =[] 
         self.texvert = []
         self.faces = []
-        self.normals = []
         with open(filename) as f:
             self.lines = f.read().splitlines()
         self.read()
@@ -200,17 +199,17 @@ class Obj(object):
         for line in self.lines:
             if line:
                 prefix, value = line.split(' ', 1)
-                
+                valuemt = ''
                 #vertices del modelo
                 if prefix == "v":
                     self.vertices.append(list(map(float, value.split(' '))))
                 
                 #vertices de las caras
+                
+                if prefix == 'usemtl':
+                    valuemt = value
                 elif prefix == "f":
                     self.faces.append([list(map(int, face.split('/'))) for face in value.split(' ')])
-                
-                elif prefix == "vn":
-                    self.normals.append(list(map(float, value.split(' '))))
 
 # ==========================================================================
 #               CLASE BITMAP 
@@ -302,58 +301,6 @@ class Bitmap(object):
                 y+=1 if y1<y2 else -1
                 threshold +=1 *dx
 
-
-#el rotate tiene los angulos medidos en radianes
-#    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
-    def load(self, filename, translate =(0,0,0), scale= (1,1,1), rotate = (0,0,0),
-            eye = (1,0,1), up = (0,1,0), center=(0,0,0), ncolors = (255, 0, 255), luz = Vector3(0,0,1)):
-
-        model = Obj(filename)
-        self.loadViewportMatrix()
-        self.loadModelMatrix(translate, scale, rotate)
-        self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
-        #aplicación de luz y material a cada cara encontrada en el modelo
-        for face in model.faces:
-            f1 = face[0][0] -1
-            f2 = face[1][0] -1
-            f3 = face[2][0] -1
-
-            a = self.transform(model.vertices[f1])
-            b = self.transform(model.vertices[f2])
-            c = self.transform(model.vertices[f3])
-                
-            f1 = face[0][2] -1
-            f2 = face[1][2] -1
-            f3 = face[2][2] -1
-
-            nA = Vector3(*model.normals[f1])
-            nB = Vector3(*model.normals[f2])
-            nC = Vector3(*model.normals[f3])
-            self.triangle(a,b,c, nA, nB, nC, luz, ncolors)
-    
-    def triangle(self, A, B, C, nA, nC, nB, luz, col):
-        col = Vector3(*col)
-        xy_min, xy_max = ordenarXY(A,B,C)
-
-        for x in range(xy_min.x, xy_max.x + 1):
-            for y in range (xy_min.y, xy_max.y + 1):
-                w, v, u = barycentric(A,B,C, Vector2(x,y))
-                print(w,v,u)
-                if w< 0 or v <0 or u<0:
-                    continue
-                print("b4 gourad")
-                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz), colores = (col.x, col.y, col.z))
-                print(color)
-                z = A.z*w + B.z*v  + C.z*u
-                if z > self.zbuffer[x][y]:
-                    
-                    self.point(x,y,color)
-                    self.zbuffer[x][y] = z
-
-# ==========================================================================
-#                       Métodos de matrices
-# ==========================================================================
-    
     def transform(self, vertex):
         aumentado = [
             [float(vertex[0])],
@@ -459,31 +406,54 @@ class Bitmap(object):
         self.View = mulMat(M, O_)
 
 
+#el rotate tiene los angulos medidos en radianes
+#    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
+    def load(self, filename, translate =(0,0,0), scale= (0.2, 0.2, 0.2), rotate = (0,0,0),
+            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0)):
+        model = Obj(filename)
+        luz= Vector3(-0.7,0.7,0.7)
 
-def gourad(render, **kwargs):
-    print("gourdad")
-    w,v,u = kwargs["bar"]
-    nA, nB, nC = kwargs["normales"]
+        self.loadViewportMatrix()
+        self.loadModelMatrix(translate, scale, rotate)
+        self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
 
-    luz = kwargs["light"]
-    normx = nA.x*w + nB.x*v + nC.x*u 
-    normy = nA.y*w + nB.y*v + nC.y*u 
-    normz = nA.z*w + nB.z*v + nC.z*u 
-    colorz = kwargs["colores"]
-    r = colorz[0]
-    g = colorz[1]
-    b = colorz[2]
-    vnormal = Vector3(normx, normy, normz)
-    intensity = prodPunto(vnormal, luz)
-    print(intensity)
-    if intensity < 0:
-        intensity =0
-    elif intensity >1:
-        intensity =1
-    print(r,g,b)
-    print(intensity*r, intensity*g, intensity*b)
-    return color(
-        round(intensity * r),
-        round(intensity * g),
-        round(intensity * b)
-    )
+        #aplicación de luz y material a cada cara encontrada en el modelo
+        for face in model.faces:
+            vcount = len(face)
+            if vcount == 3:
+                f1 = face[0][0] -1
+                f2 = face[1][0] -1
+                f3 = face[2][0] -1
+
+                a = self.transform(model.vertices[f1])
+                b = self.transform(model.vertices[f2])
+                c = self.transform(model.vertices[f3])
+                normal = normalizar(prodCruz(restaVectorial(b,a), restaVectorial(c, a)))
+                intensidad = prodPunto(normal, luz)
+                shade = int(255*intensidad)
+                if shade <0 :
+                    continue
+                elif shade > 255:
+                    shade = 255
+                #try:
+                    #self.triangle(a,b,c, color(int(shade*(material.vmat[0][0])),int(shade*(material.vmat[0][1])),int(shade*(material.vmat[0][2]))))
+                self.triangle(a,b,c, color(shade, shade, shade))
+                #except(IndexError):
+                 #   pass
+                
+    
+    def triangle(self, A, B, C, color= color(255,255,255)):
+        xy_min, xy_max = ordenarXY(A,B,C)
+
+        for x in range(xy_min.x, xy_max.x + 1):
+            for y in range (xy_min.y, xy_max.y + 1):
+                w, v, u = barycentric(A,B,C, Vector2(x,y))
+                if w< 0 or v <0 or u<0:
+                    continue
+                
+                z = A.z*w + B.z*v  + C.z*u
+                if x < self.width and y < self.height and x>=0 and y>=0:
+                    if z > self.zbuffer[x][y]:
+                        self.point(x,y,color)
+                        self.zbuffer[x][y] = z
+                
