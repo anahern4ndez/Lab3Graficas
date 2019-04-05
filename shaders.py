@@ -8,6 +8,7 @@
 import struct
 from collections import namedtuple
 from math import *
+import perlin as p
 
 #variables globales
 Vector2 = namedtuple('Vertex2',['x', 'y'])
@@ -273,7 +274,7 @@ class Bitmap(object):
 #el rotate tiene los angulos medidos en radianes
 #    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
     def load(self, filename, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
-            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0), ncolor= (255, 0, 255), luz=(0,0,1)):
+            eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0), luz=(0,0,1)):
         model = Obj(filename)
 
         self.loadViewportMatrix()
@@ -299,13 +300,9 @@ class Bitmap(object):
                 nA = Vector3(*model.normals[n1])
                 nB = Vector3(*model.normals[n2])
                 nC = Vector3(*model.normals[n3])
-                ncolor = color(200, 122, 123)
-                self.triangle(a,b,c, nA, nB, nC, luz, ncolor)
-                #except(IndexError):
-                 #   pass
-                
+                self.triangle(a,b,c, nA, nB, nC, luz)
     
-    def triangle(self, A, B, C, nA, nC, nB, luz, ncolors):
+    def triangle(self, A, B, C, nA, nC, nB, luz):
         
         xy_min, xy_max = ordenarXY(A,B,C)
         #print(xy_min, xy_max)
@@ -317,7 +314,7 @@ class Bitmap(object):
                 if w< 0 or v <0 or u<0:
                     continue
                     
-                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz), colores = ncolors)
+                color = gourad(self, x, y, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz))
                 z = A.z*w + B.z*v  + C.z*u
                 if z > self.zbuffer[x][y]:
                     self.point(x,y,color)
@@ -432,7 +429,7 @@ class Bitmap(object):
         self.View = mulMat(M, O_)
 
 
-def gourad(render, **kwargs):
+def gourad(render, x, y, **kwargs):
     w,v,u = kwargs["bar"]
     nA, nB, nC = kwargs["normales"]
 
@@ -440,18 +437,51 @@ def gourad(render, **kwargs):
     normx = nA.x*w + nB.x*v + nC.x*u 
     normy = nA.y*w + nB.y*v + nC.y*u 
     normz = nA.z*w + nB.z*v + nC.z*u 
-    colorz = kwargs["colores"]
-    r = colorz[0]
-    g = colorz[1]
-    b = colorz[2]
     vnormal = Vector3(normx, normy, normz)
     intensity = prodPunto(vnormal, luz)
     if intensity < 0:
         intensity =0
     elif intensity >1:
         intensity =1
-    return color(
-        round(intensity * r),
-        round(intensity * g),
-        round(intensity * b)
-    )
+    
+    #lista de colores a utilizar
+    sand_grey = (146,139,133)
+    wolf_grey = (156,156,154)
+    light_brown = (112,96,80)
+    wood = (123,82,52)
+
+    pnoise = p.Perlin()
+
+    for m in range(800):
+        for n in range(800):
+            col = [int((pnoise.value(x/800.0, y/10.0, 0) +1) * 250), ] *3
+
+            if col[0] > 250:
+                mul = [int((light_brown[0]*col[0]/255.0)* intensity),int((light_brown[1]*col[1]/255.0)* intensity),int((light_brown[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+            else: 
+                mul = [int((wolf_grey[0]*col[0]/255.0)* intensity),int((wolf_grey[1]*col[1]/255.0)* intensity),
+                    int((wolf_grey[2]*col[2]/255.0)* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+            '''elif col[1] >60: 
+                mul = [0,0,0]
+                if mul[0] > 0: mul[0] = int((wood[0]*col[0]/255.0)* intensity)
+                if mul[1] > 0: mul[1] = int((wood[1]*col[0]/255.0)* intensity)
+                if mul[2] > 0: mul[2] = int((wood[2]*col[0]/255.0)* intensity)
+                return color(mul[0], mul[1], mul[2])
+            elif col[1] >40: 
+                mul = [0,0,0]
+                if mul[0] > 0: mul[0] = int((sand_grey[0]*col[0]/255.0)* intensity)
+                if mul[1] > 0: mul[1] = int((sand_grey[1]*col[0]/255.0)* intensity)
+                if mul[2] > 0: mul[2] = int((sand_grey[2]*col[0]/255.0)* intensity)
+                return color(mul[0], mul[1], mul[2])'''
+            
+
+
+
