@@ -270,33 +270,6 @@ class Bitmap(object):
     def point(self,x,y,color = color(255,255,255)):
         self.framebuffer[y][x] = color
 
-    def load(self, filename, translate =(0,0,0), scale= (0.8,0.8,0.8), rotate = (0,0,0),
-            eye = (1,0,1), up = (0,1,0), center=(0,0,0), ncolors = (255, 0, 255), luz = (0,0,1)):
-
-        model = Obj(filename)
-        #self.luz= Vector3(-0.7,0.7,0.7)
-        self.loadViewportMatrix()
-        self.loadModelMatrix(translate, scale, rotate)
-        self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
-        #aplicación de luz y material a cada cara encontrada en el modelo
-        for face in model.faces:
-            f1 = face[0][0] -1
-            f2 = face[1][0] -1
-            f3 = face[2][0] -1
-
-            a = self.transform(Vector3(*model.vertices[f1]))
-            b = self.transform(Vector3(*model.vertices[f2]))
-            c = self.transform(Vector3(*model.vertices[f3]))
-            
-            print(a,b,c)
-            n1 = face[0][2] -1
-            n2 = face[1][2] -1
-            n3 = face[2][2] -1
-
-            nA = Vector3(*model.normals[n1])
-            nB = Vector3(*model.normals[n2])
-            nC = Vector3(*model.normals[n3])
-            self.triangle(a,b,c, nA, nB, nC, luz, ncolors)
 #el rotate tiene los angulos medidos en radianes
 #    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
     def load(self, filename, matfile, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
@@ -335,7 +308,7 @@ class Bitmap(object):
                 nA = Vector3(*model.normals[n1])
                 nB = Vector3(*model.normals[n2])
                 nC = Vector3(*model.normals[n3])
-                self.triangle(a,b,c, nA, nB, nC, luz, color(shade, shade, shade))
+                self.triangle(a,b,c, nA, nB, nC, luz, color(200, 122, 123))
                 #except(IndexError):
                  #   pass
                 
@@ -352,7 +325,7 @@ class Bitmap(object):
                 if w< 0 or v <0 or u<0:
                     continue
                     
-                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz), colores = color)
+                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz), colores = ncolors)
                 z = A.z*w + B.z*v  + C.z*u
                 if z > self.zbuffer[x][y]:
                     self.point(x,y,color)
@@ -366,7 +339,7 @@ class Bitmap(object):
         aumentado = [
             [vertex[0]],
             [vertex[1]],
-            [vertex.[2]],
+            [vertex[2]],
             [1.0]
         ]
         #la multiplicacion de matrices va de afuera para adentro     
