@@ -156,6 +156,19 @@ def mulMat(A, B):
     filasA = len(A)
     colA = len(A[0])
     colB = len(B[0])
+        #en caso que la matriz A sea un vector, no una matriz (en el caso del vector "aumentado")
+    filasA = len(A)
+    try: 
+        colA = len(A[0])
+    except(TypeError):
+        colA = 1
+    #en caso que la matriz B sea un vector, no una matriz (en el caso del vector "aumentado")
+    try: 
+        colB = len(B[0])
+    except(TypeError):
+        colB = 1
+
+
     #creacion de matriz resultado:
     C=[]
     try: 
@@ -171,29 +184,6 @@ def mulMat(A, B):
         print("La multiplicación entre estas matrices no puede ser realizada. ")
     return C
 
-def gourad(render, **kwargs):
-    w,v,u = kwargs["bar"]
-    #tx, ty = kwargs["texture_coords"]
-    nA, nB, nC = kwargs["normales"]
-    #tcolor = render.texture.get_color(tx,ty)
-
-    '''return color(
-        tcolor[2]*intensity,
-        tcolor[1]*intensity,
-        tcolor[0]*intensity
-    )'''
-    normx = nA.x*w + nB.x*v + nC.x*u 
-    normy = nA.y*w + nB.y*v + nC.y*u 
-    normz = nA.z*w + nB.z*v + nC.z*u 
-
-    vnormal = Vector3(normx, normy, normz)
-    intensity = prodPunto(vnormal, render.light)
-
-    return color(
-        (intensity),
-        (intensity),
-        (intensity)
-    )
 # ==========================================================================
 #               CLASE MATERIAL 
 # ==========================================================================
@@ -376,52 +366,33 @@ class Bitmap(object):
                 threshold +=1 *dx
 
 
+    def load(self, filename, translate =(0,0,0), scale= (1,1,1), rotate = (0,0,0),
+            eye = (1,0,1), up = (0,1,0), center=(0,0,0), ncolors = (255, 0, 255), luz = Vector3(0,0,1)):
 
-#el rotate tiene los angulos medidos en radianes
-    def load(self, filename, matfile, translate =(0,0,0), scale= (0.5, 0.5, 0.5), rotate = (0,3.14/2,0)):
-        
         model = Obj(filename)
-        self.luz= Vector3(-0.7,0.7,0.7)
-
         self.loadViewportMatrix()
         self.loadModelMatrix(translate, scale, rotate)
-        self.lookAt(Vector3(0,0,1), Vector3(0,1,0), Vector3(0,0,0))
-
-        v_b_o = []
-
+        self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
+        #aplicación de luz y material a cada cara encontrada en el modelo
         for face in model.faces:
             f1 = face[0][0] -1
             f2 = face[1][0] -1
             f3 = face[2][0] -1
 
-            a = self.transform(Vector3(*model.vertices[f1]))
-            b = self.transform(Vector3(*model.vertices[f2]))
-            c = self.transform(Vector3(*model.vertices[f3]))
-            normal = normalizar(prodCruz(restaVectorial(b,a), restaVectorial(c, a)))
-            intensidad = prodPunto(normal, self.luz)
-            shade = int(255*intensidad)
-            if shade <0 :
-                continue
-            elif shade > 255:
-                shade = 255
-            
-            #self.triangle(a,b,c, color(shade, shade, shade))
+            a = self.transform(model.vertices[f1])
+            b = self.transform(model.vertices[f2])
+            c = self.transform(model.vertices[f3])
+                
+            f1 = face[0][2] -1
+            f2 = face[1][2] -1
+            f3 = face[2][2] -1
 
             nA = Vector3(*model.normals[f1])
             nB = Vector3(*model.normals[f2])
             nC = Vector3(*model.normals[f3])
-
-            for facepart in face:
-                vertice = self.transform(Vector3(*model.vertices[facepart[0]]))
-                v_b_o.append(vertice)
-                normal = Vector3(*model.normals[facepart[2]])            
-                v_b_o.append(normal)
-
-            self.triangle(a,b,c, nA, nC, nB, color(shade, shade, shade))
-            
-
+            self.triangle(a,b,c, nA, nB, nC, luz, ncolors)
     
-    def triangle(self, A, B, C, nA, nB, nC, color= color(255,255,255)):
+    def triangle(self, A, B, C, nA, nC, nB, luz,color= color(255,255,255)):
         
         xy_min, xy_max = ordenarXY(A,B,C)
 
@@ -432,7 +403,7 @@ class Bitmap(object):
                 if w< 0 or v <0 or u<0:
                     continue
                     
-                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC))
+                color = gourad(self, bar=(w,v,u), normales=(nA, nB, nC), light = luz, colores = color)
                 z = A.z*w + B.z*v  + C.z*u
                 if z > self.zbuffer[x][y]:
                     self.point(x,y,color)
@@ -547,3 +518,32 @@ class Bitmap(object):
         self.View = mulMat(M, O_)
 
 
+
+
+def gourad(render, **kwargs):
+    print("gourdad")
+    w,v,u = kwargs["bar"]
+    nA, nB, nC = kwargs["normales"]
+
+    luz = kwargs["light"]
+    normx = nA.x*w + nB.x*v + nC.x*u 
+    normy = nA.y*w + nB.y*v + nC.y*u 
+    normz = nA.z*w + nB.z*v + nC.z*u 
+    colorz = kwargs["colores"]
+    r = colorz[0]
+    g = colorz[1]
+    b = colorz[2]
+    vnormal = Vector3(normx, normy, normz)
+    intensity = prodPunto(vnormal, luz)
+    print(intensity)
+    if intensity < 0:
+        intensity =0
+    elif intensity >1:
+        intensity =1
+    print(r,g,b)
+    print(intensity*r, intensity*g, intensity*b)
+    return color(
+        round(intensity * r),
+        round(intensity * g),
+        round(intensity * b)
+    )
