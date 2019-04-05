@@ -207,7 +207,7 @@ class Obj(object):
                 
                 #vertices de las caras
                 elif prefix == "f":
-                    self.faces.append([list(map(int, face.split('/'))) for face in value.split(' ')])
+                    self.faces.append([list(map(int, face.split('//'))) for face in value.split(' ')])
                 
                 elif prefix == "vn":
                     self.normals.append(list(map(float, value.split(' '))))
