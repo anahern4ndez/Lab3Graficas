@@ -280,6 +280,9 @@ class Bitmap(object):
         model = Obj(filename)
         if filename == "esfera.obj":
             self.active_shader = gouradPlanet
+        elif filename == "ring.obj":
+            self.active_shader = gouradRing
+
         self.loadViewportMatrix()
         self.loadModelMatrix(translate, scale, rotate)
         self.lookAt(Vector3(*eye), Vector3(*up), Vector3(*center))
@@ -318,9 +321,10 @@ class Bitmap(object):
                     continue
                 color = self.active_shader(self, x, y, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz))
                 z = A.z*w + B.z*v  + C.z*u
-                if z > self.zbuffer[x][y]:
-                    self.point(x,y,color)
-                    self.zbuffer[x][y] = z
+                if x < self.width and y < self.height and x>=0 and y>=0:
+                    if z > self.zbuffer[x][y]:
+                        self.point(x,y,color)
+                        self.zbuffer[x][y] = z
 
 # ==========================================================================
 #                       Métodos de matrices
@@ -510,8 +514,46 @@ def gouradPlanet(render, x, y, **kwargs):
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
 
+def gouradRing(render, x, y, **kwargs):
+    w,v,u = kwargs["bar"]
+    nA, nB, nC = kwargs["normales"]
 
+    luz = kwargs["light"]
+    normx = nA.x*w + nB.x*v + nC.x*u 
+    normy = nA.y*w + nB.y*v + nC.y*u 
+    normz = nA.z*w + nB.z*v + nC.z*u 
+    vnormal = Vector3(normx, normy, normz)
+    intensity = prodPunto(vnormal, luz)
+    if intensity < 0:
+        intensity =0
+    elif intensity >1:
+        intensity =1
+    
+    intensity *= 2
+    #lista de colores a utilizar
+    vdark_wood = (50,41,32)
+    dark_wood =(80,64,51)
+    light_wood = (147,129,107)
+    greywood = (105,95,85)
+    grey =(136,127,118)
+    light_grey = (143,144,139)
+    near_white = (183,183,181)
 
+    # color de anillo 
+    ring = (107,109,96)
+
+    pnoise = p.Perlin()
+    for m in range(800):
+        for n in range(800):
+            col = [int((pnoise.value(x/200.0, y/200.0, 0)+1) *200), ] *3
+            mul = [int((ring[0]/255.0*col[0])* intensity),int((ring[1]/255.0*col[1])* intensity),
+            int((ring[2]/255.0*col[2])* intensity)]
+            if mul[0] < 0: mul[0] =0
+            if mul[1] < 0: mul[1] = 0
+            if mul[2] < 0: mul[2] = 0
+            return color(mul[0], mul[1], mul[2])
+
+            
 def Estrellas():
     r = bm
     glClearColor(0,0,0)    
