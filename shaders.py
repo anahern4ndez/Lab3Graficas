@@ -447,45 +447,54 @@ def gouradPlanet(render, x, y, **kwargs):
         intensity =1
     
     #lista de colores a utilizar
-    sand_grey = (146,139,133)
-    wolf_grey = (156,156,154)
-    light_brown = (112,96,80)
-    wood = (123,82,52)
-    white = (255, 255, 255)
-    dark_grey = (135,135,123)
-    dark_wood = (58,53,50)
-    browngrey = (152,148,137)
+    vdark_wood = (50,41,32)
+    dark_wood =(80,64,51)
+    light_wood = (147,129,107)
+    greywood = (105,95,85)
+    grey =(136,127,118)
+    light_grey = (143,144,139)
+    near_white = (183,183,181)
+
 
     pnoise = p.Perlin()
     for m in range(800):
         for n in range(800):
             col = [int((pnoise.value(x/800.0, y/11.0, 0)+1) *200), ] *3
 
-            if col[0] >=220 and col[0] <=200:
-                mul = [int((browngrey[0]/255.0*col[0])* intensity),int((browngrey[1]/255.0*col[1])* intensity),
-                    int((browngrey[2]/255.0*col[2])* intensity)]
+            if col[1] > 220:
+                mul = [int((near_white[0]/255.0*col[0])* intensity),int((near_white[1]/255.0*col[1])* intensity),
+                int((near_white[2]/255.0*col[2])* intensity)]
                 if mul[0] < 0: mul[0] =0
                 if mul[1] < 0: mul[1] = 0
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
 
-            if col[1] > 250:
-                mul = [int((light_brown[0]/255.0*col[0])* intensity),int((light_brown[1]/255.0*col[1])* intensity),
-                int((light_brown[2]/255.0*col[2])* intensity)]
+            if col[1] >210: 
+                mul = [int((light_grey[0]/255.0*col[0])* intensity),int((light_grey[1]/255.0*col[1])* intensity),
+                    int((light_grey[2]/255.0*col[2])* intensity)]
                 if mul[0] < 0: mul[0] =0
                 if mul[1] < 0: mul[1] = 0
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
 
-            if col[1] >190: 
-                mul = [int((wolf_grey[0]/255.0*col[0])* intensity),int((wolf_grey[1]/255.0*col[1])* intensity),
-                    int((wolf_grey[2]/255.0*col[2])* intensity)]
+            if col[1] >205: 
+                mul = [int((greywood[0]/255.0*col[0])* intensity),int((greywood[1]/255.0*col[1])* intensity),
+                    int((greywood[2]/255.0*col[2])* intensity)]
                 if mul[0] < 0: mul[0] =0
                 if mul[1] < 0: mul[1] = 0
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
             
-            if col[1] >=120 and col[0] <=160:
+            
+            if col[1] >170: 
+                mul = [int((light_wood[0]/255.0*col[0])* intensity),int((light_wood[1]/255.0*col[1])* intensity),
+                    int((light_wood[2]/255.0*col[2])* intensity)]
+                if mul[0] < 0: mul[0] =0
+                if mul[1] < 0: mul[1] = 0
+                if mul[2] < 0: mul[2] = 0
+                return color(mul[0], mul[1], mul[2])
+
+            if col[1] >150:
                 mul = [int((dark_wood[0]/255.0*col[0])* intensity),int((dark_wood[1]/255.0*col[1])* intensity),
                     int((dark_wood[2]/255.0*col[2])* intensity)]
                 if mul[0] < 0: mul[0] =0
@@ -493,24 +502,9 @@ def gouradPlanet(render, x, y, **kwargs):
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
 
-            if col[1] >170: 
-                mul = [int((wood[0]/255.0*col[0])* intensity),int((wood[1]/255.0*col[1])* intensity),
-                    int((wood[2]/255.0*col[2])* intensity)]
-                if mul[0] < 0: mul[0] =0
-                if mul[1] < 0: mul[1] = 0
-                if mul[2] < 0: mul[2] = 0
-                return color(mul[0], mul[1], mul[2])
-            
-            if col[1] >100: 
-                mul = [int((sand_grey[0]/255.0*col[0])* intensity),int((sand_grey[1]/255.0*col[1])* intensity),
-                    int((sand_grey[2]/255.0*col[2])* intensity)]
-                if mul[0] < 0: mul[0] =0
-                if mul[1] < 0: mul[1] = 0
-                if mul[2] < 0: mul[2] = 0
-                return color(mul[0], mul[1], mul[2])
             else:
-                mul = [int((white[0]/255.0*col[0])* intensity),int((white[1]/255.0*col[1])* intensity),
-                    int((white[2]/255.0*col[2])* intensity)]
+                mul = [int((grey[0]/255.0*col[0])* intensity),int((grey[1]/255.0*col[1])* intensity),
+                    int((grey[2]/255.0*col[2])* intensity)]
                 if mul[0] < 0: mul[0] =0
                 if mul[1] < 0: mul[1] = 0
                 if mul[2] < 0: mul[2] = 0
