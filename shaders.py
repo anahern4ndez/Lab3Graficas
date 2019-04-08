@@ -3,7 +3,7 @@
 # Ana Lucia Hernandez
 # 17138
 # Graficas por Computadora 
-#Modulo donde se guardas las funciones necesarias para el sr5. 
+#Modulo donde se guardas las funciones necesarias para el renderizado del planeta jupiter. 
 
 import struct
 from collections import namedtuple
@@ -274,7 +274,6 @@ class Bitmap(object):
         self.framebuffer[y][x] = color
 
 #el rotate tiene los angulos medidos en radianes
-#    def load(self, filename, matfile, translate =(-0.75,-0.75,-0.5), scale= (1000, 1000, 1000), rotate = (0,0,0)):
     def load(self, filename, translate =(0,0,0), scale= (0.97, 0.97, 0.97), rotate = (0,0,0),
             eye = (0,0.5,0.5), up = (0,1,0), center=(0,0,0), luz=(0,0,1), active_shader = None):
         model = Obj(filename)
@@ -311,12 +310,9 @@ class Bitmap(object):
     def triangle(self, A, B, C, nA, nC, nB, luz):
         
         xy_min, xy_max = ordenarXY(A,B,C)
-        #print(xy_min, xy_max)
         for x in range(xy_min.x, xy_max.x + 1):
             for y in range (xy_min.y, xy_max.y + 1):
-                #print(x,y)
                 w, v, u = barycentric(A,B,C, Vector2(x,y))
-                #print(w,v,u)
                 if w< 0 or v <0 or u<0:
                     continue
                 color = self.active_shader(self, x, y, bar=(w,v,u), normales=(nA, nB, nC), light = Vector3(*luz))
@@ -433,12 +429,14 @@ class Bitmap(object):
 
         ]
         self.View = mulMat(M, O_)
-
-
+# ===================================================================================
+#                               SHADERS 
+# ===================================================================================
+   
+#shader para hacer el planeta (la bola) de jupiter
 def gouradPlanet(render, x, y, **kwargs):
     w,v,u = kwargs["bar"]
     nA, nB, nC = kwargs["normales"]
-
     luz = kwargs["light"]
     normx = nA.x*w + nB.x*v + nC.x*u 
     normy = nA.y*w + nB.y*v + nC.y*u 
@@ -450,8 +448,7 @@ def gouradPlanet(render, x, y, **kwargs):
     elif intensity >1:
         intensity =1
     
-    #lista de colores a utilizar
-    vdark_wood = (50,41,32)
+    #lista de colores a utilizar, con su valor rgb. 
     dark_wood =(80,64,51)
     light_wood = (147,129,107)
     greywood = (105,95,85)
@@ -460,6 +457,7 @@ def gouradPlanet(render, x, y, **kwargs):
     near_white = (183,183,181)
 
 
+    #aqui se crea el ruido (mediante perlin noise) para la generación de colores 
     pnoise = p.Perlin()
     for m in range(800):
         for n in range(800):
@@ -489,7 +487,6 @@ def gouradPlanet(render, x, y, **kwargs):
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
             
-            
             if col[1] >170: 
                 mul = [int((light_wood[0]/255.0*col[0])* intensity),int((light_wood[1]/255.0*col[1])* intensity),
                     int((light_wood[2]/255.0*col[2])* intensity)]
@@ -514,6 +511,7 @@ def gouradPlanet(render, x, y, **kwargs):
                 if mul[2] < 0: mul[2] = 0
                 return color(mul[0], mul[1], mul[2])
 
+#shader para el anillo de jupiter
 def gouradRing(render, x, y, **kwargs):
     w,v,u = kwargs["bar"]
     nA, nB, nC = kwargs["normales"]
@@ -530,14 +528,6 @@ def gouradRing(render, x, y, **kwargs):
         intensity =1
     
     intensity *= 2
-    #lista de colores a utilizar
-    vdark_wood = (50,41,32)
-    dark_wood =(80,64,51)
-    light_wood = (147,129,107)
-    greywood = (105,95,85)
-    grey =(136,127,118)
-    light_grey = (143,144,139)
-    near_white = (183,183,181)
 
     # color de anillo 
     ring = (107,109,96)
@@ -553,7 +543,7 @@ def gouradRing(render, x, y, **kwargs):
             if mul[2] < 0: mul[2] = 0
             return color(mul[0], mul[1], mul[2])
 
-            
+## esta funcion se usa para crear el cielo con estrellas para fondo de pantalla
 def Estrellas():
     r = bm
     glClearColor(0,0,0)    
